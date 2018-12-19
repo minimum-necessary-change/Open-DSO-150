@@ -95,7 +95,9 @@ Digital Signals can be connected to PB13/PB14/PB15. There's no protection on tho
 
 ## Building Open DSO-150
 Open DSO-150 should build directly after opening the project in the free STM32 version of Atollic trueSTUDIO.
-https://atollic.com/truestudio/
+https://atollic.com/truestudio/.
+Note: to generate "hex" output in addition to "elf" output add a post build step e.g. 
+ - "arm-atollic-eabi-objcopy -O ihex ${ProjDirPath}/${ConfigName}/${ProjName}.elf ${ProjDirPath}/${ConfigName}/${ProjName}.hex".
 
 It should also compile under the System Workbench for STM32 after creating a new project and importing the source files but I haven't tried that...
 
