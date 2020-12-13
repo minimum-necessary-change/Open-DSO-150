@@ -24,8 +24,7 @@
 
 #ifdef __cplusplus
 }
+
 #endif
-
-
 
 #endif /* TINY_PRINTF_H_ */

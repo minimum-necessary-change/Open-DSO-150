@@ -8,16 +8,14 @@
 #include "interface.hpp"
 #include "capture.hpp"
 #include "io.hpp"
+#include "tiny_printf.h"
 #include "EEPROM/eeprom.hpp"
 
 #define PAGE_WAVEFORM_START 111
 #define PAGE_WAVEFORM_COUNT 12
-#define PAGE_SETTING_START 123
-#define PAGE_SETTING_COUNT 4
 
 
-extern uint16_t ch1Capture[NUM_SAMPLES];  //6144 bytes
-extern uint16_t bitStore[NUM_SAMPLES];    //6144 byte -> total of 12288 bytes = 12 Kb
+extern uint16_t ch1Capture[NUM_SAMPLES];
 extern volatile bool hold;
 extern I2C_HandleTypeDef hi2c2;  //External EEPROM
 
@@ -32,13 +30,19 @@ const float adcMultiplierBase[] = {0.2000,0.1000,0.0500, 0.0200, 0.0100, 0.0050,
 //- when we load we look for the last written header and load that
 //- Unless one of them is 255 and the next is 0, thne we use the one with 0 (Rollover...)
 
+uint16_t makeVersion(void)
+{
+	return ((uint16_t)FIRMWARE_VERSION_MAJOR<<8) + (uint16_t)FIRMWARE_VERSION_MINOR;
+}
+
+
 void autoSafe(void)
 {
   //Compare if config has changed
   if (0 != memcmp(&config, &oldConfig,sizeof(t_config)))
   {
       formatSaveConfig();
-      oldConfig = config;
+      memcpy(&oldConfig,&config,sizeof(t_config));
   }
 }
 
@@ -50,20 +54,41 @@ void loadConfig(bool reset)
 
 
 	// read preamble
+	loadDefaults();
 	if(reset)
 	{
-	    loadDefaults();
 		formatSaveConfig();
-		oldConfig = config;
+		memcpy(&oldConfig,&config,sizeof(t_config));
 	}
 	else
 	{
 		//Load Defaults
 		EE_Reads(0,sizeof(t_config),(uint32_t*)&config);
-		oldConfig = config;
+		//Marker Check
+		if ((config.configID[0] != 'D') || (config.configID[1] != 'S') || (config.configID[2] != 'O') || (config.configID[3] != 'S'))
+		{
+			DBG_PRINT("No Config ID, creating defaults\n");
+			//Create defaults
+			loadDefaults();
+			formatSaveConfig();
+		}
+		else
+		{
+			//Check FW version
+			if (config.configFWversion != makeVersion())
+			{
+				DBG_PRINT("Wrong Firmware ID, creating defaults\n");
+				//Create defaults
+				loadDefaults();
+				formatSaveConfig();
+			}
+		}
+
+		memcpy(&oldConfig,&config,sizeof(t_config));
 	}
 
-	
+    //printConfig();
+
 	//Set Parameters
 	setTimeBase(config.currentTimeBase);
 	setTriggerType(config.triggerType);
@@ -73,8 +98,6 @@ void loadConfig(bool reset)
     setZoomFactor(config.zoomFactor);
     setTriggerSource(config.triggerSource);
     setVoltageRange(config.currentVoltageRange);
-
-    printConfig();
 }
 
 // ------------------------
@@ -83,6 +106,12 @@ void loadDefaults()
 {
     uint16_t ii;
 	DBG_PRINT("Loading defaults...\n");
+
+	config.configID[0] = 'D';
+	config.configID[1] = 'S';
+	config.configID[2] = 'O';
+	config.configID[3] = 'S';
+	config.configFWversion = makeVersion();
 
 	setTimeBase(T30US);
     setVoltageRange(RNG_5V);
@@ -180,17 +209,19 @@ void printConfig(void)
     printf("Display Persistence: %d\n",config.persistence_on);
 
     printf("A1 Zerocal ");
-    for (ii=0;ii<RNG_5mV+1;ii++)
+    for (ii=0;ii<(RNG_5mV+1);ii++)
     {
     	printf("%d,",config.zeroVoltageA1Cal[ii]);
     }
+
     printf("\n");
 
     printf("A1 Gaincal ");
-    for (ii=0;ii<RNG_5mV+1;ii++)
+    for (ii=0;ii<(RNG_5mV+1);ii++)
     {
     	printf("%d,",(int)(config.adcMultiplier[ii]*1000.0));
     }
+
     printf("\n");
 }
 
@@ -334,8 +365,6 @@ void loadWaveform()
 
   if (false == EE_LL_Read(PAGE_WAVEFORM_START,0,sizeof(ch1Capture),(uint8_t*)ch1Capture))
     printf("Error reading Analog data from EEPROM\n");
-  if (false == EE_LL_Read(PAGE_WAVEFORM_START+6,0,sizeof(bitStore),(uint8_t*)bitStore))
-    printf("Error reading Digital data from EEPROM\n");
   //Force display refresh
   drawWaves();
 }
@@ -348,8 +377,6 @@ void saveWaveform(void)
 
   if (false == EE_LL_Write(PAGE_WAVEFORM_START,0,sizeof(ch1Capture),(uint8_t*)ch1Capture))
     printf("Error writing Analog data to EEPROM\n");
-  if (false == EE_LL_Write(PAGE_WAVEFORM_START+6,0,sizeof(bitStore),(uint8_t*)bitStore))
-    printf("Error writing Digital data to EEPROM\n");
 
 }
 

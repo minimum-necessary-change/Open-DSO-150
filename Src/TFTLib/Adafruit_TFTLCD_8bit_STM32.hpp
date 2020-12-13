@@ -137,10 +137,9 @@
 #define ILI9341_ENTRYMODE          0xB7
 #define ILI9341_POWERCONTROL1      0xC0
 #define ILI9341_POWERCONTROL2      0xC1
-#define ILI9341_VCOMCONTROL1      0xC5
-#define ILI9341_VCOMCONTROL2      0xC7
-#define ILI9341_MEMCONTROL      0x36
-#define ILI9341_MADCTL  0x36
+#define ILI9341_VCOMCONTROL1      	0xC5
+#define ILI9341_VCOMCONTROL2      	0xC7
+#define ILI9341_MADCTL  			0x36
 
 #define ILI9341_MADCTL_MY  0x80
 #define ILI9341_MADCTL_MX  0x40
@@ -164,7 +163,7 @@
 #define HX8347G_MEMACCESS          0x16
 
 
-void     ili9341_begin(void);
+uint16_t ili9341_begin(void);
 void     ili9341_reset(void);
 void     ili9341_setLR(void);
 void     drawPixel(int16_t x, int16_t y, uint16_t color);

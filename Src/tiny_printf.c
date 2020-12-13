@@ -52,11 +52,9 @@ SOFTWARE.
 */
 
 /* Includes */
-
 #include <stdio.h>
 #include <string.h>
 #include "tiny_printf.h"
-
 
 /* Create aliases for *printf to integer variants *iprintf */
 __attribute__ ((alias("iprintf"))) int printf(const char *fmt, ...);
@@ -68,7 +66,7 @@ extern int _write(int fd, char *str, int len);
 
 /* Private function prototypes */
 void ts_itoa(char **buf, unsigned int d, int base);
-#ifdef FLOAT_SUPPORT	
+#ifdef FLOAT_SUPPORT
 void ts_ftoa(char **buf, float f, int precision);
 void setFloatPrecision(unsigned int precision);
 int intpow(int x, int y);
@@ -116,36 +114,36 @@ void setFloatPrecision(unsigned int precision)
   if (float_precision > 8)
       float_precision = 8;
 }
-	
+
 int intpow(int x, int y)
 {
 	int res=x;
-	
+
 	if (y==0)
 		return 1;
-		
+
 	for (int ii=1;ii<y;ii++)
 	{
 		res = res * x;
 	}
 	return res;
 }
-	
+
 void ts_ftoa(char **buf, float f, int precision)
 {
 	int a=0,b=0,c=0,k=0,l=0;
-	
+
 	// check for negetive float
 	if(f<0.0)
 	{
-		
+
 		*((*buf)++)='-';
 		f*=-1;
 	}
-	
+
 	a=f;	// extracting whole number
 	f-=a;	// extracting decimal part
-	
+
 
     //Add Leading 0...
     if (a==0)
@@ -162,12 +160,12 @@ void ts_ftoa(char **buf, float f, int precision)
     k--;
 
 	// number of digits in whole number are k+1
-	
+
 	/*
 	extracting most significant digit i.e. right most digit , and concatenating to string
 	obtained as quotient by dividing number by 10^k where k = (number of digit -1)
 	*/
-	
+
 	for(l=k+1;l>0;l--)
 	{
 		b = intpow(10,l-1);
@@ -178,7 +176,7 @@ void ts_ftoa(char **buf, float f, int precision)
 
 
 	*((*buf)++) = '.';
-	
+
 	/* extracting decimal digits till precision */
 
 	for(l=0;l<precision;l++)
@@ -221,14 +219,14 @@ int ts_formatstring(char *buf, const char *fmt, va_list va)
 					ts_itoa(&buf, val, 10);
 				}
 				break;
-#ifdef FLOAT_SUPPORT				
+#ifdef FLOAT_SUPPORT
 			  case 'f':
 				{
 					double val = va_arg(va, double);
 					ts_ftoa(&buf, val, float_precision);
 				}
 				break;
-#endif				
+#endif
 			  case 's':
 				{
 					char * arg = va_arg(va, char *);
@@ -291,15 +289,15 @@ int ts_formatlength(const char *fmt, va_list va)
 				  length += 11;
 				  va_arg(va,signed int);
 				  break;
-#ifdef FLOAT_SUPPORT				
+#ifdef FLOAT_SUPPORT
 			  case 'f':
 				{
-				  /* 32 bits float is max 20 characters with minus sign,decimal seperator if we limit precision to 8 digits*/ 
+				  /* 32 bits float is max 20 characters with minus sign,decimal seperator if we limit precision to 8 digits*/
 				  length += 20;
 				  va_arg(va, double);
 				}
 				break;
-#endif						  
+#endif
 			  case 's':
 			  	  {
 			  		  char * str = va_arg(va, char *);
@@ -401,6 +399,7 @@ int iprintf(const char *fmt, ...)
 **
 **===========================================================================
 */
+
 int fputs(const char *s, FILE *fp)
 {
 	int length = strlen(s);
